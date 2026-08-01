@@ -69,6 +69,10 @@ Module.OnChatEvent = function(self, chatFrame, event, message, author, ...)
 		if who then
 			return false, string_format(ns.out.quest_status_completed, ns.GetClassColoredName(who)), author, ...
 		end
+		who = string_match(message, "^(%S+) is not eligible for that quest")
+		if who then
+			return false, string_format(ns.out.quest_status_ineligible, ns.GetClassColoredName(who)), author, ...
+		end
 	end
 
 	local name
