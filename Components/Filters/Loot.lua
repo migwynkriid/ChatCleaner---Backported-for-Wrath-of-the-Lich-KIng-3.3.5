@@ -105,6 +105,9 @@ local ROLL_RESULTS = {
 	{ pattern = "Disenchant Roll %- (%d+) for (.+) by (.+)", out = "roll_result_de" },
 }
 
+local ASC_LOOT_MULTIPLE = "^(.-)|c%x+:|r%s+(|c%x+|H.-|h.-|h|r)x(%d+)$"
+local ASC_LOOT_SINGLE = "^(.-)|c%x+:|r%s+(|c%x+|H.-|h.-|h|r)$"
+
 Module.OnAddMessage = function(self, chatFrame, msg, r, g, b, chatID, ...)
 	-- Not sure any of these Honor entries are parsed, or even needed.
 
@@ -212,6 +215,26 @@ Module.OnChatEvent = function(self, chatFrame, event, message, author, ...)
 		local allPassed = safeMatch(message, P[G.LOOT_ROLL_ALL_PASSED])
 		if allPassed then
 			return false, string_format(ns.out.roll_all_passed, ns.StripBrackets(allPassed)), author, ...
+		end
+
+		local aName, aItem, aCount = string_match(message, ASC_LOOT_MULTIPLE)
+		if aName and aItem then
+			return false,
+				string_format(
+					ns.out.item_multiple_other,
+					ns.GetClassColoredName(aName),
+					ns.StripBrackets(aItem),
+					tonumber(aCount)
+				),
+				author,
+				...
+		end
+		aName, aItem = string_match(message, ASC_LOOT_SINGLE)
+		if aName and aItem then
+			return false,
+				string_format(ns.out.item_single_other, ns.GetClassColoredName(aName), ns.StripBrackets(aItem)),
+				author,
+				...
 		end
 
 		-- Handle regular loot patterns
