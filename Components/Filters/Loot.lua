@@ -7,6 +7,9 @@ local Module = ns:NewModule("Loot")
 -- GLOBALS: hooksecurefunc, GetContainerItemLink, GetContainerItemInfo
 -- GLOBALS: TakeInboxItem, GetInboxItem, GetInboxItemLink
 -- GLOBALS: GetCursorInfo, DeleteCursorItem, GetItemInfo
+-- GLOBALS: CreateFrame, MAX_TRADABLE_ITEMS
+-- GLOBALS: GetTradePlayerItemLink, GetTradePlayerItemInfo
+-- GLOBALS: GetTradeTargetItemLink, GetTradeTargetItemInfo
 
 -- Lua API
 local ipairs = ipairs
@@ -417,6 +420,25 @@ Module.ReportMailItem = function(self, mailID, attachIndex)
 	ns.PrintToFrame(DEFAULT_CHAT_FRAME or ChatFrame1, msg, "LOOT")
 end
 
+-- Trades are silent on 3.3.5, so mirror mail/vendor: "+ item" received, "- item" given.
+Module.ReportTradeItem = function(self, link, count, received)
+	if not link then
+		return
+	end
+
+	local item = ns.StripBrackets(link)
+	local multiple = count and count > 1
+	local template
+	if received then
+		template = multiple and ns.out.item_multiple or ns.out.item_single
+	else
+		template = multiple and ns.out.item_deficit_multiple or ns.out.item_deficit
+	end
+
+	local msg = multiple and string_format(template, item, count) or string_format(template, item)
+	ns.PrintToFrame(DEFAULT_CHAT_FRAME or ChatFrame1, msg, "LOOT")
+end
+
 local onAddMessageProxy = function(...)
 	return Module:OnAddMessage(...)
 end
@@ -561,6 +583,55 @@ Module.OnEnable = function(self)
 				end
 			end
 		end
+	end
+
+	-- Trades emit no loot line, so report items that change hands. The trade slots
+	-- are cleared by TRADE_CLOSED, so snapshot them on each accept-state change
+	-- (window still open) and emit once the trade completes (both sides accepted).
+	if not self.tradeHooked then
+		self.tradeHooked = true
+
+		local pending, playerAccepted, targetAccepted
+
+		local function snapshotTrade()
+			local received, given = {}, {}
+			for i = 1, (MAX_TRADABLE_ITEMS or 6) do
+				local rlink = GetTradeTargetItemLink and GetTradeTargetItemLink(i)
+				if rlink then
+					local _, _, rcount = GetTradeTargetItemInfo(i)
+					received[#received + 1] = { link = rlink, count = rcount or 1 }
+				end
+				local glink = GetTradePlayerItemLink and GetTradePlayerItemLink(i)
+				if glink then
+					local _, _, gcount = GetTradePlayerItemInfo(i)
+					given[#given + 1] = { link = glink, count = gcount or 1 }
+				end
+			end
+			pending = { received = received, given = given }
+		end
+
+		local frame = CreateFrame("Frame")
+		frame:RegisterEvent("TRADE_SHOW")
+		frame:RegisterEvent("TRADE_ACCEPT_UPDATE")
+		frame:RegisterEvent("TRADE_CLOSED")
+		frame:SetScript("OnEvent", function(_, event, arg1, arg2)
+			if event == "TRADE_SHOW" then
+				pending, playerAccepted, targetAccepted = nil, nil, nil
+			elseif event == "TRADE_ACCEPT_UPDATE" then
+				playerAccepted, targetAccepted = arg1, arg2
+				snapshotTrade()
+			elseif event == "TRADE_CLOSED" then
+				if Module:IsEnabled() and pending and playerAccepted == 1 and targetAccepted == 1 then
+					for _, e in ipairs(pending.received) do
+						Module:ReportTradeItem(e.link, e.count, true)
+					end
+					for _, e in ipairs(pending.given) do
+						Module:ReportTradeItem(e.link, e.count, false)
+					end
+				end
+				pending, playerAccepted, targetAccepted = nil, nil, nil
+			end
+		end)
 	end
 end
 
