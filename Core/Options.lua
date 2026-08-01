@@ -447,6 +447,22 @@ local filterDB = {
 			return ns.db.highlightSound
 		end,
 	},
+	-- Wired to the top-level ns.db.showTradeItems flag (not a module of its own).
+	showTradeItems = {
+		name = L["Trade Items"],
+		desc = L["Show a + line for items received in a trade and a - line for items you give. Requires the Loot filter."],
+		width = 1.5,
+		type = "toggle",
+		disabled = function(info)
+			return not ns.db.filters.loot
+		end,
+		set = function(info, value)
+			ns.db.showTradeItems = value
+		end,
+		get = function(info)
+			return ns.db.showTradeItems
+		end,
+	},
 	clickInvite = {
 		name = L["Shift-Click Invite"],
 		desc = L["Shift-click a player name in chat to send a group invite."],

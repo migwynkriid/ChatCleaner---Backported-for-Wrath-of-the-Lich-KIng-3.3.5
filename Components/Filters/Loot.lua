@@ -621,7 +621,8 @@ Module.OnEnable = function(self)
 				playerAccepted, targetAccepted = arg1, arg2
 				snapshotTrade()
 			elseif event == "TRADE_CLOSED" then
-				if Module:IsEnabled() and pending and playerAccepted == 1 and targetAccepted == 1 then
+				local report = Module:IsEnabled() and ns.db and ns.db.showTradeItems
+				if report and pending and playerAccepted == 1 and targetAccepted == 1 then
 					for _, e in ipairs(pending.received) do
 						Module:ReportTradeItem(e.link, e.count, true)
 					end
