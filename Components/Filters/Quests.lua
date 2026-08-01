@@ -58,6 +58,19 @@ Module.OnChatEvent = function(self, chatFrame, event, message, author, ...)
 		return
 	end
 
+	-- Ascension broadcasts other players' quest status as plain system lines;
+	-- class-colour the name and tidy the text.
+	if event == "CHAT_MSG_SYSTEM" and (ns.db == nil or ns.db.prettifyQuestStatus) then
+		local who = string_match(message, "^(%S+) is already on that quest")
+		if who then
+			return false, string_format(ns.out.quest_status_already, ns.GetClassColoredName(who)), author, ...
+		end
+		who = string_match(message, "^(%S+) has completed that quest")
+		if who then
+			return false, string_format(ns.out.quest_status_completed, ns.GetClassColoredName(who)), author, ...
+		end
+	end
+
 	local name
 
 	-- Adding completed transmog sets here,

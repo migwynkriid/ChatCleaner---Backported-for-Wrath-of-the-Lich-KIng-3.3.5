@@ -257,6 +257,7 @@ local defaults = {
 	showVendorSales = true, -- show "- item" when selling to vendors
 	showTradeItems = false, -- show +/- lines for items exchanged in a player trade
 	prettifyGuildStatus = true, -- prettify guild online/offline messages
+	prettifyQuestStatus = true, -- prettify other players' quest status broadcasts
 	highlightSound = false, -- play an alert sound when your own name is highlighted (requires the highlight filter)
 	filters = {
 		achievements = true,

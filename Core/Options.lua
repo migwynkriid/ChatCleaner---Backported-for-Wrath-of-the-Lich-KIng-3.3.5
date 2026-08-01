@@ -281,6 +281,22 @@ local formattingDB = {
 				return ns.db.prettifyGuildStatus
 			end,
 		},
+		prettifyQuestStatus = {
+			order = 110,
+			name = L["Prettify Quest Status"],
+			desc = L["Tidy up and class-colour the quest status messages shown for other players. Requires the Quests filter."],
+			width = 1.5,
+			type = "toggle",
+			disabled = function(info)
+				return not ns.db.filters.quests
+			end,
+			set = function(info, value)
+				ns.db.prettifyQuestStatus = value
+			end,
+			get = function(info)
+				return ns.db.prettifyQuestStatus
+			end,
+		},
 	},
 }
 
