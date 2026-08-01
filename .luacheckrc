@@ -210,6 +210,13 @@ read_globals = {
   "PickupContainerItem",
   "UseContainerItem",
 
+  -- WoW API - Trade Functions
+  "MAX_TRADABLE_ITEMS",
+  "GetTradePlayerItemLink",
+  "GetTradePlayerItemInfo",
+  "GetTradeTargetItemLink",
+  "GetTradeTargetItemInfo",
+
   -- WoW API - Auction Functions
   "StartAuction",
   "GetAuctionSellItemInfo",
