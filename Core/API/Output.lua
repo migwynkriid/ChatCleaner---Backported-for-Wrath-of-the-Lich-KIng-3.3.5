@@ -133,7 +133,7 @@ out.levelup_essence = "*green*+** *darkorange*Unspent Talent Essence**"
 -- Quest rewards combined output (when oneLineQuestRewards enabled)
 out.quest_rewards_combined = "*green*+** %s"
 
--- PvP currency outputs (Ascension)
+-- PvP currency outputs
 out.arena_points = "*green*+** *white*%d** *green*Arena Points**"
 out.arena_points_status = "*gray*Current:** *white*%d** *gray*/ %d**"
 out.glory = "*green*+** *white*%d** *yellow*Glory**"

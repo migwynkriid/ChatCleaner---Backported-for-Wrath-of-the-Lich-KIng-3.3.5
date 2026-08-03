@@ -32,7 +32,7 @@ local G = {
 	COMBATLOG_HONORGAIN_NO_RANK = COMBATLOG_HONORGAIN_NO_RANK, -- "%s dies, honorable kill (%d Honor Points)"
 	COMBATLOG_ARENAPOINTSAWARD = COMBATLOG_ARENAPOINTSAWARD, -- "You have been awarded %d arena points."
 
-	-- 3.3.5 Quest reward items (no trailing period in Ascension client)
+	-- 3.3.5 Quest reward items
 	QUEST_LOG_RECEIVED_ITEM = "Received item: %s", -- Quest reward item message
 	QUEST_LOG_RECEIVED_ITEM_MULTIPLE = "Received item: %sx%d", -- Quest reward item message with count
 	QUEST_LOG_RECEIVED_COUNT_OF_ITEM = "Received %d of item: %s", -- "Received 125 of item: [Rune of Ascension]"
@@ -97,7 +97,7 @@ local ROLL_ACTIONS = {
 	{ pattern = G.LOOT_ROLL_PASSED_AUTO, kind = "other", out = "roll_pass_other" },
 }
 
--- "<action> Roll - <roll> for <item> by <name>" result lines (Ascension).
+-- "<action> Roll - <roll> for <item> by <name>" result lines.
 -- Captures: roll, item, name. Output arg order: item, roll, name.
 local ROLL_RESULTS = {
 	{ pattern = "Need Roll %- (%d+) for (.+) by (.+)", out = "roll_result_need" },
