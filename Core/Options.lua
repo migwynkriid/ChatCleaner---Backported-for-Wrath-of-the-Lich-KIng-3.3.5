@@ -281,6 +281,22 @@ local formattingDB = {
 				return ns.db.prettifyGuildStatus
 			end,
 		},
+		prettifyQuestStatus = {
+			order = 110,
+			name = L["Prettify Quest Status"],
+			desc = L["Tidy up and class-colour the quest status messages shown for other players. Requires the Quests filter."],
+			width = 1.5,
+			type = "toggle",
+			disabled = function(info)
+				return not ns.db.filters.quests
+			end,
+			set = function(info, value)
+				ns.db.prettifyQuestStatus = value
+			end,
+			get = function(info)
+				return ns.db.prettifyQuestStatus
+			end,
+		},
 	},
 }
 
@@ -445,6 +461,22 @@ local filterDB = {
 		end,
 		get = function(info)
 			return ns.db.highlightSound
+		end,
+	},
+	-- Wired to the top-level ns.db.showTradeItems flag (not a module of its own).
+	showTradeItems = {
+		name = L["Trade Items"],
+		desc = L["Show a + line for items received in a trade and a - line for items you give. Requires the Loot filter."],
+		width = 1.5,
+		type = "toggle",
+		disabled = function(info)
+			return not ns.db.filters.loot
+		end,
+		set = function(info, value)
+			ns.db.showTradeItems = value
+		end,
+		get = function(info)
+			return ns.db.showTradeItems
 		end,
 	},
 	clickInvite = {
@@ -726,7 +758,7 @@ end
 Options.OnInitialize = function(self)
 	self:RegisterChatCommand("cc", "OpenOptionsMenu")
 	self:RegisterChatCommand("cleanerchat", "OpenOptionsMenu")
-	-- TEMPORARY DIAGNOSTIC command (see Components/_Debug.lua).
+	-- Toggles chat debug capture (see Components/Filters/_Debug.lua).
 	self:RegisterChatCommand("ccdebug", function()
 		if ns.ToggleRawDebug then
 			ns.ToggleRawDebug()

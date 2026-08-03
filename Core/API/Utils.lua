@@ -1,11 +1,14 @@
 local _, ns = ...
 
 -- Lua API
+local ipairs = ipairs
 local rawget = rawget
 local rawset = rawset
 local setmetatable = setmetatable
 local string_gsub = string.gsub
 local string_match = string.match
+
+-- GLOBALS: UnitExists, UnitIsPlayer, UnitName, UnitClass
 
 -- Converts a WoW global string (containing %d / %s tokens) into a Lua
 -- search pattern with capture groups. Previously duplicated verbatim in
@@ -52,6 +55,39 @@ ns.StripBrackets = function(s)
 		return s
 	end
 	return (string_gsub(s, "[%[/%]]", ""))
+end
+
+-- Class-colour a player name via any unit that currently matches it (3.3.5 has
+-- no name->class API): your char, the target/focus/mouseover chain, party, raid.
+-- Returns the name unchanged when the class can't be resolved.
+local classColorUnits
+ns.GetClassColoredName = function(name)
+	if (not name) or (name == "") then
+		return name
+	end
+	local colors = ns.Colors
+	if (not colors) or not colors.class then
+		return name
+	end
+	if not classColorUnits then
+		classColorUnits = { "player", "target", "targettarget", "focus", "focustarget", "mouseover" }
+		for i = 1, 4 do
+			classColorUnits[#classColorUnits + 1] = "party" .. i
+		end
+		for i = 1, 40 do
+			classColorUnits[#classColorUnits + 1] = "raid" .. i
+		end
+	end
+	for _, unit in ipairs(classColorUnits) do
+		if UnitExists(unit) and UnitIsPlayer(unit) and UnitName(unit) == name then
+			local _, class = UnitClass(unit)
+			local color = class and colors.class[class]
+			if color and color.colorCode then
+				return color.colorCode .. name .. "|r"
+			end
+		end
+	end
+	return name
 end
 
 -- Emit a message to a chat frame using the colour WoW normally uses for the

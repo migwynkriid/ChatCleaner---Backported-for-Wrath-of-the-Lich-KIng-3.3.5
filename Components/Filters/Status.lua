@@ -58,7 +58,7 @@ Module.OnChatEvent = function(self, chatFrame, event, message, author, ...)
 		return false, ns.out.rested_cleared, author, ...
 	end
 
-	-- Arena Points (Ascension): "You've received 25 Arena Points. Current Points: (25) Cap: (25/110000)"
+	-- Arena Points: "You've received 25 Arena Points. Current Points: (25) Cap: (25/110000)"
 	if string_find(message, "Arena Points") then
 		local amount = string_match(message, "received (%d+) Arena Points")
 		local current, cap = string_match(message, "Cap: %((%d+)/(%d+)%)")
@@ -83,7 +83,7 @@ Module.OnChatEvent = function(self, chatFrame, event, message, author, ...)
 		end
 	end
 
-	-- Glory (Ascension): "|CFF1CB619 You gained 50 Glory for winning a battleground. 5502 Glory needed to reach the next rank|r."
+	-- Glory: "|CFF1CB619 You gained 50 Glory for winning a battleground. 5502 Glory needed to reach the next rank|r."
 	-- Strip color codes (both |c and |C formats) before parsing
 	local cleanMessage = string_gsub(message, "|[cC]%x%x%x%x%x%x%x%x", "")
 	cleanMessage = string_gsub(cleanMessage, "|r", "")

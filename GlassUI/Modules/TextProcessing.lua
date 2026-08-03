@@ -7,12 +7,12 @@ local strsplit = strsplit
 -- luacheck: pop
 
 ---
---Takes a texture escape string and adjusts its yOffset
+-- Takes a texture escape string and adjusts its yOffset
 local function adjustTextureYOffset(texture, yOffset)
 	-- Texture has 14 parts
 	-- path, height, width, offsetX, offsetY,
 	-- texWidth, texHeight
-	-- leftTex, topTex, rightTex, bottomText,
+	-- leftTex, topTex, rightTex, bottomTex,
 	-- rColor, gColor, bColor
 
 	-- Strip escape characters
@@ -20,7 +20,7 @@ local function adjustTextureYOffset(texture, yOffset)
 	local parts = { strsplit(":", strsub(texture, 3, -3)) }
 
 	if #parts < 5 then
-		-- Pad out ommitted attributes
+		-- Pad out omitted attributes
 		for i = 1, 5 do
 			if parts[i] == nil then
 				if i == 3 then
@@ -36,7 +36,7 @@ local function adjustTextureYOffset(texture, yOffset)
 	-- Adjust yOffset by configured amount
 	parts[5] = tostring(tonumber(parts[5]) - yOffset)
 
-	-- Rejoin string and readd escape codes
+	-- Rejoin string and re-add escape codes
 	return "|T" .. strjoin(":", unpack(parts)) .. "|t"
 end
 

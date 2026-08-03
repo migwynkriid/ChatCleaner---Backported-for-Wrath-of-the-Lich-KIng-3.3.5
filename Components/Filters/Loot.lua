@@ -7,6 +7,9 @@ local Module = ns:NewModule("Loot")
 -- GLOBALS: hooksecurefunc, GetContainerItemLink, GetContainerItemInfo
 -- GLOBALS: TakeInboxItem, GetInboxItem, GetInboxItemLink
 -- GLOBALS: GetCursorInfo, DeleteCursorItem, GetItemInfo
+-- GLOBALS: CreateFrame, MAX_TRADABLE_ITEMS
+-- GLOBALS: GetTradePlayerItemLink, GetTradePlayerItemInfo
+-- GLOBALS: GetTradeTargetItemLink, GetTradeTargetItemInfo
 
 -- Lua API
 local ipairs = ipairs
@@ -29,7 +32,7 @@ local G = {
 	COMBATLOG_HONORGAIN_NO_RANK = COMBATLOG_HONORGAIN_NO_RANK, -- "%s dies, honorable kill (%d Honor Points)"
 	COMBATLOG_ARENAPOINTSAWARD = COMBATLOG_ARENAPOINTSAWARD, -- "You have been awarded %d arena points."
 
-	-- 3.3.5 Quest reward items (no trailing period in Ascension client)
+	-- 3.3.5 Quest reward items
 	QUEST_LOG_RECEIVED_ITEM = "Received item: %s", -- Quest reward item message
 	QUEST_LOG_RECEIVED_ITEM_MULTIPLE = "Received item: %sx%d", -- Quest reward item message with count
 	QUEST_LOG_RECEIVED_COUNT_OF_ITEM = "Received %d of item: %s", -- "Received 125 of item: [Rune of Ascension]"
@@ -94,13 +97,16 @@ local ROLL_ACTIONS = {
 	{ pattern = G.LOOT_ROLL_PASSED_AUTO, kind = "other", out = "roll_pass_other" },
 }
 
--- "<action> Roll - <roll> for <item> by <name>" result lines (Ascension).
+-- "<action> Roll - <roll> for <item> by <name>" result lines.
 -- Captures: roll, item, name. Output arg order: item, roll, name.
 local ROLL_RESULTS = {
 	{ pattern = "Need Roll %- (%d+) for (.+) by (.+)", out = "roll_result_need" },
 	{ pattern = "Greed Roll %- (%d+) for (.+) by (.+)", out = "roll_result_greed" },
 	{ pattern = "Disenchant Roll %- (%d+) for (.+) by (.+)", out = "roll_result_de" },
 }
+
+local ASC_LOOT_MULTIPLE = "^(.-)|c%x+:|r%s+(|c%x+|H.-|h.-|h|r)x(%d+)$"
+local ASC_LOOT_SINGLE = "^(.-)|c%x+:|r%s+(|c%x+|H.-|h.-|h|r)$"
 
 Module.OnAddMessage = function(self, chatFrame, msg, r, g, b, chatID, ...)
 	-- Not sure any of these Honor entries are parsed, or even needed.
@@ -209,6 +215,26 @@ Module.OnChatEvent = function(self, chatFrame, event, message, author, ...)
 		local allPassed = safeMatch(message, P[G.LOOT_ROLL_ALL_PASSED])
 		if allPassed then
 			return false, string_format(ns.out.roll_all_passed, ns.StripBrackets(allPassed)), author, ...
+		end
+
+		local aName, aItem, aCount = string_match(message, ASC_LOOT_MULTIPLE)
+		if aName and aItem then
+			return false,
+				string_format(
+					ns.out.item_multiple_other,
+					ns.GetClassColoredName(aName),
+					ns.StripBrackets(aItem),
+					tonumber(aCount)
+				),
+				author,
+				...
+		end
+		aName, aItem = string_match(message, ASC_LOOT_SINGLE)
+		if aName and aItem then
+			return false,
+				string_format(ns.out.item_single_other, ns.GetClassColoredName(aName), ns.StripBrackets(aItem)),
+				author,
+				...
 		end
 
 		-- Handle regular loot patterns
@@ -417,6 +443,25 @@ Module.ReportMailItem = function(self, mailID, attachIndex)
 	ns.PrintToFrame(DEFAULT_CHAT_FRAME or ChatFrame1, msg, "LOOT")
 end
 
+-- Trades are silent on 3.3.5, so mirror mail/vendor: "+ item" received, "- item" given.
+Module.ReportTradeItem = function(self, link, count, received)
+	if not link then
+		return
+	end
+
+	local item = ns.StripBrackets(link)
+	local multiple = count and count > 1
+	local template
+	if received then
+		template = multiple and ns.out.item_multiple or ns.out.item_single
+	else
+		template = multiple and ns.out.item_deficit_multiple or ns.out.item_deficit
+	end
+
+	local msg = multiple and string_format(template, item, count) or string_format(template, item)
+	ns.PrintToFrame(DEFAULT_CHAT_FRAME or ChatFrame1, msg, "LOOT")
+end
+
 local onAddMessageProxy = function(...)
 	return Module:OnAddMessage(...)
 end
@@ -561,6 +606,56 @@ Module.OnEnable = function(self)
 				end
 			end
 		end
+	end
+
+	-- Trades emit no loot line, so report items that change hands. The trade slots
+	-- are cleared by TRADE_CLOSED, so snapshot them on each accept-state change
+	-- (window still open) and emit once the trade completes (both sides accepted).
+	if not self.tradeHooked then
+		self.tradeHooked = true
+
+		local pending, playerAccepted, targetAccepted
+
+		local function snapshotTrade()
+			local received, given = {}, {}
+			for i = 1, (MAX_TRADABLE_ITEMS or 6) do
+				local rlink = GetTradeTargetItemLink and GetTradeTargetItemLink(i)
+				if rlink then
+					local _, _, rcount = GetTradeTargetItemInfo(i)
+					received[#received + 1] = { link = rlink, count = rcount or 1 }
+				end
+				local glink = GetTradePlayerItemLink and GetTradePlayerItemLink(i)
+				if glink then
+					local _, _, gcount = GetTradePlayerItemInfo(i)
+					given[#given + 1] = { link = glink, count = gcount or 1 }
+				end
+			end
+			pending = { received = received, given = given }
+		end
+
+		local frame = CreateFrame("Frame")
+		frame:RegisterEvent("TRADE_SHOW")
+		frame:RegisterEvent("TRADE_ACCEPT_UPDATE")
+		frame:RegisterEvent("TRADE_CLOSED")
+		frame:SetScript("OnEvent", function(_, event, arg1, arg2)
+			if event == "TRADE_SHOW" then
+				pending, playerAccepted, targetAccepted = nil, nil, nil
+			elseif event == "TRADE_ACCEPT_UPDATE" then
+				playerAccepted, targetAccepted = arg1, arg2
+				snapshotTrade()
+			elseif event == "TRADE_CLOSED" then
+				local report = Module:IsEnabled() and ns.db and ns.db.showTradeItems
+				if report and pending and playerAccepted == 1 and targetAccepted == 1 then
+					for _, e in ipairs(pending.received) do
+						Module:ReportTradeItem(e.link, e.count, true)
+					end
+					for _, e in ipairs(pending.given) do
+						Module:ReportTradeItem(e.link, e.count, false)
+					end
+				end
+				pending, playerAccepted, targetAccepted = nil, nil, nil
+			end
+		end)
 	end
 end
 

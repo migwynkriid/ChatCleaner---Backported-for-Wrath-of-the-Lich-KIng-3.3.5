@@ -36,7 +36,7 @@ ns.out = setmetatable(ns.out or {}, {
 		end
 
 		-- Have to do this with an indexed table,
-		-- as the order of the entires matters.
+		-- as the order of the entries matters.
 		for _, entry in ipairs({
 			{ "%*title%*", colors.title.colorCode },
 			{ "%*white%*", colors.highlight.colorCode },
@@ -94,6 +94,9 @@ out.money_deficit = "*gray*-** %s"
 out.objective_status = plus_yellow
 out.quest_accepted = plus_yellow
 out.quest_complete = plus_yellow
+out.quest_status_already = "%s *gray*is already on that quest**"
+out.quest_status_completed = "%s *green*has completed that quest**"
+out.quest_status_ineligible = "%s *gray*is not eligible for that quest**"
 out.rested_added = "*green*+** *gray*" .. RESTED .. "**"
 out.rested_cleared = "*orange*- " .. RESTED .. "**"
 out.set_complete = plus_yellow
@@ -130,7 +133,7 @@ out.levelup_essence = "*green*+** *darkorange*Unspent Talent Essence**"
 -- Quest rewards combined output (when oneLineQuestRewards enabled)
 out.quest_rewards_combined = "*green*+** %s"
 
--- PvP currency outputs (Ascension)
+-- PvP currency outputs
 out.arena_points = "*green*+** *white*%d** *green*Arena Points**"
 out.arena_points_status = "*gray*Current:** *white*%d** *gray*/ %d**"
 out.glory = "*green*+** *white*%d** *yellow*Glory**"

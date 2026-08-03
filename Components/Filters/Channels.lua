@@ -119,7 +119,7 @@ Module.OnInitialize = function(self)
 	safeAddDynamicReplacement(G.CHAT_GUILD_GET, "Guild", L["G"])
 	safeAddDynamicReplacement(G.CHAT_OFFICER_GET, "Officer", L["O"])
 
-	-- Ascension-specific: Dungeon Guide (LFG party channel)
+	-- Dungeon Guide (LFG party channel)
 	-- Format: |Hchannel:PARTY|h[Dungeon Guide]|h
 	table_insert(self.replacements, {
 		"|Hchannel:PARTY|h%[Dungeon Guide%]|h",

@@ -88,9 +88,9 @@ Module.OnChatEvent = function(self, chatFrame, event, message, author, ...)
 end
 
 Module.OnReplacementSet = function(self, msg, r, g, b, chatID, ...)
-	-- Loot spec changed, or just reported
-	-- This one will fire at the initial PLAYER_ENTERING_WORLD,
-	-- as the chat frames haven't yet been registered for user events at that point.
+	-- Recipe learned. Handled here at the replacement layer because it can fire
+	-- during the initial PLAYER_ENTERING_WORLD, before the chat frames are
+	-- registered for user events.
 	local craft = string_match(msg, P[G.LEARN_RECIPE])
 	if craft then
 		return string_format(ns.out.objective_status, G.LEARNED, craft)
