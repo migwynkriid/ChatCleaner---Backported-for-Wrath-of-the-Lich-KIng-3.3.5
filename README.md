@@ -9,6 +9,15 @@ default chat frame with an immersive, modern chat UI.
 
 <br />
 
+**👇  Click the button below to grab the latest release  👇**
+
+[![Download CleanerChat.zip](https://img.shields.io/badge/DOWNLOAD%20LATEST%20RELEASE-CleanerChat.zip-DFBA69?style=for-the-badge&labelColor=1784b8)](https://github.com/migwynkriid/CleanerChat-WotLK/releases/latest/download/CleanerChat.zip)
+
+**👆  Click the button above to grab the latest release  👆**
+
+
+<br />
+
 [![Version](https://img.shields.io/badge/version-2.42-DFBA69?style=for-the-badge)](CleanerChat.toc)
 [![WoW](https://img.shields.io/badge/WoW-3.3.5a%20WotLK-1784b8?style=for-the-badge)](#compatibility)
 [![Interface](https://img.shields.io/badge/interface-30300-555?style=for-the-badge)](#compatibility)
