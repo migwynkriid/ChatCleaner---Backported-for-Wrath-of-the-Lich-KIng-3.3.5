@@ -24,7 +24,7 @@ function MoverFrameMixin:Init()
 	self:SetWidth(self.profile.frameWidth)
 	self:SetHeight(self.profile.frameHeight + editBoxMargin)
 
-	-- Draw the mover above the chat (which sits at MEDIUM) so its move/resize
+	-- Draw the mover above the chat (which sits at LOW) so its move/resize
 	-- card and corner grips stay visible even over a full chat window.
 	self:SetFrameStrata("DIALOG")
 	self:SetToplevel(true)

@@ -156,12 +156,8 @@ local function makeReplacementSet()
 				return msg
 			end
 
-			-- Iterate all registered replacement sets.
 			for i, set in next, self do
-				-- Check if the module has supplied
-				-- a table of string replacements or a func.
 				if type(set) == "table" then
-					-- The module has supplied a table, iterate it.
 					for k, data in ipairs(set) do
 						if data[1] and data[2] and (string_match(msg, data[1])) then
 							-- string_gsub handles function replacements by passing captures
@@ -335,7 +331,7 @@ ns.FilterMessage = function(self, chatFrame, msg, r, g, b, chatID, ...)
 
 	-- TODO:
 	-- *Encode Questie links, parse encoded string, decode Questie link.
-	--  This will ensure their links is uncorrupted but the line parsed in full.
+	--  This keeps their links uncorrupted while still parsing the line in full.
 	if not ns:IsProtectedMessage(msg) then
 		-- Unconditional blacklist: consulted for EVERY message, even those whose
 		-- chatID is in ignoredIDs. Channel join/leave/change notices carry the
@@ -490,7 +486,7 @@ ns.GetModuleNameFromFilter = function(self, key)
 end
 
 ns.UpgradeSettings = function(self)
-	-- Have the db been upgraded?
+	-- Has the db been upgraded?
 	if not CleanerChat_DB.configversion or CleanerChat_DB.configversion < 2 then
 		-- Work on a clone.
 		local old = CopyTable(CleanerChat_DB)

@@ -36,7 +36,7 @@ ns.out = setmetatable(ns.out or {}, {
 		end
 
 		-- Have to do this with an indexed table,
-		-- as the order of the entires matters.
+		-- as the order of the entries matters.
 		for _, entry in ipairs({
 			{ "%*title%*", colors.title.colorCode },
 			{ "%*white%*", colors.highlight.colorCode },

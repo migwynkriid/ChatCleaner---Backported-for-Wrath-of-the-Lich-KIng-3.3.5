@@ -758,7 +758,7 @@ end
 Options.OnInitialize = function(self)
 	self:RegisterChatCommand("cc", "OpenOptionsMenu")
 	self:RegisterChatCommand("cleanerchat", "OpenOptionsMenu")
-	-- TEMPORARY DIAGNOSTIC command (see Components/_Debug.lua).
+	-- Toggles chat debug capture (see Components/Filters/_Debug.lua).
 	self:RegisterChatCommand("ccdebug", function()
 		if ns.ToggleRawDebug then
 			ns.ToggleRawDebug()
