@@ -1,0 +1,56 @@
+name: Update Warperia Downloads Badge
+
+# Scrapes the CleanerChat download count from Warperia and stores it in a GitHub
+# Gist (NOT this repo, so it never creates commits). The README badge reads the
+# count from that gist via shields.io's endpoint renderer.
+#
+# Gist: https://gist.github.com/migwynkriid/5137d5c66c70a38da67ae68bcf41b97c
+#
+# One-time setup: create a Personal Access Token with the "gist" scope
+# (https://github.com/settings/tokens, classic, check "gist"), then add it to
+# this repo as a secret named GIST_TOKEN:
+#   Settings > Secrets and variables > Actions > New repository secret
+# Nothing is committed to this repository by this workflow.
+
+on:
+  schedule:
+    # Every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: warperia-downloads
+  cancel-in-progress: false
+
+# No repo write access needed: the badge lives in a gist, not this repo.
+permissions:
+  contents: read
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch download count from Warperia
+        id: fetch
+        run: |
+          python3 <<'PY' >> "$GITHUB_OUTPUT"
+          import re, urllib.request
+          url = "https://warperia.com/addon-wotlk/cleanerchat/"
+          req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+          html = urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "replace")
+          m = re.search(r"Downloads:.*?bi-download.*?</i>\s*([\d,]+)", html, re.S)
+          if not m:
+              raise SystemExit("Could not parse download count from " + url)
+          print("count=" + m.group(1).replace(",", ""))
+          PY
+
+      - name: Update gist badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: 5137d5c66c70a38da67ae68bcf41b97c
+          filename: warperia-downloads.json
+          label: warperia
+          message: ${{ steps.fetch.outputs.count }}
+          color: 1784b8
