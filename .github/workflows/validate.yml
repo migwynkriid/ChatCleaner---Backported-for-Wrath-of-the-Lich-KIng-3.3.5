@@ -4,6 +4,22 @@ on:
   pull_request:
     branches:
       - main
+    # Skip validation when a PR only touches files that are NOT bundled with the
+    # addon (dev/CI files, docs, tests, etc.). Mirrors release.yml's ignore list.
+    # A PR that also changes any bundled file will still run validation.
+    paths-ignore:
+      - '.github/**'
+      - '.gitignore'
+      - '.luacheckrc'
+      - 'stylua.toml'
+      - 'APIDocumentation/**'
+      - 'changelog.txt'
+      - '**/*.zip'
+      - 'README.md'
+      - 'LICENSE.txt'
+      - 'CONTRIBUTING.md'
+      - 'docs/**'
+      - 'spec/**'
 
 jobs:
   validate:
