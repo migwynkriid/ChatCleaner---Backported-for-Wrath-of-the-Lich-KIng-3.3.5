@@ -27,8 +27,7 @@ default chat frame with an immersive, modern chat UI.
 [![Ascension](https://img.shields.io/badge/tested%20on-Ascension%20WoW-e8782b?style=flat)](https://ascension.gg/)
 [![Stars](https://img.shields.io/github/stars/migwynkriid/CleanerChat-WotLK?style=flat&color=DFBA69)](https://github.com/migwynkriid/CleanerChat-WotLK/stargazers)
 [![Issues](https://img.shields.io/github/issues/migwynkriid/CleanerChat-WotLK?style=flat)](https://github.com/migwynkriid/CleanerChat-WotLK/issues)
-[![Downloads](https://img.shields.io/github/downloads/migwynkriid/CleanerChat-WotLK/total.svg?style=flat)](https://github.com/migwynkriid/CleanerChat-WotLK/releases)
-[![Warperia downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fgist.githubusercontent.com%2Fmigwynkriid%2F5137d5c66c70a38da67ae68bcf41b97c%2Fraw%2Fwarperia-downloads.json&style=flat&cacheSeconds=300)](https://warperia.com/addon-wotlk/cleanerchat/)
+[![Downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fgist.githubusercontent.com%2Fmigwynkriid%2F5137d5c66c70a38da67ae68bcf41b97c%2Fraw%2Fwarperia-downloads.json&style=flat&cacheSeconds=300)](https://github.com/migwynkriid/CleanerChat-WotLK/releases)
 [![Last commit](https://img.shields.io/github/last-commit/migwynkriid/CleanerChat-WotLK?style=flat)](https://github.com/migwynkriid/CleanerChat-WotLK/commits)
 
 ![CleanerChat in action](https://i.imgur.com/8lj13ch.gif)

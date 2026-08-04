@@ -1,8 +1,9 @@
-name: Update Warperia Downloads Badge
+name: Update Downloads Badge
 
-# Scrapes the CleanerChat download count from Warperia and stores it in a GitHub
-# Gist (NOT this repo, so it never creates commits). The README badge reads the
-# count from that gist via shields.io's endpoint renderer.
+# Combines GitHub release downloads + the Warperia download count into a single
+# total, and stores it in a GitHub Gist (NOT this repo, so it never creates
+# commits). The README badge reads the total from that gist via shields.io's
+# endpoint renderer.
 #
 # Gist: https://gist.github.com/migwynkriid/5137d5c66c70a38da67ae68bcf41b97c
 #
@@ -31,18 +32,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Fetch download count from Warperia
+      - name: Fetch combined download count
         id: fetch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           python3 <<'PY' >> "$GITHUB_OUTPUT"
-          import re, urllib.request
-          url = "https://warperia.com/addon-wotlk/cleanerchat/"
-          req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-          html = urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "replace")
+          import json, os, re, urllib.request
+
+          def get(url, headers=None):
+              req = urllib.request.Request(url, headers=headers or {})
+              return urllib.request.urlopen(req, timeout=30)
+
+          # 1) Warperia download count (scraped from the addon page).
+          wurl = "https://warperia.com/addon-wotlk/cleanerchat/"
+          html = get(wurl, {"User-Agent": "Mozilla/5.0"}).read().decode("utf-8", "replace")
           m = re.search(r"Downloads:.*?bi-download.*?</i>\s*([\d,]+)", html, re.S)
           if not m:
-              raise SystemExit("Could not parse download count from " + url)
-          print("count=" + m.group(1).replace(",", ""))
+              raise SystemExit("Could not parse Warperia download count from " + wurl)
+          warperia = int(m.group(1).replace(",", ""))
+
+          # 2) GitHub release downloads (sum of every release asset, all pages).
+          repo = os.environ["GH_REPO"]
+          token = os.environ.get("GH_TOKEN", "")
+          headers = {"User-Agent": "badge-bot", "Accept": "application/vnd.github+json"}
+          if token:
+              headers["Authorization"] = "Bearer " + token
+          github = 0
+          page = 1
+          while True:
+              url = "https://api.github.com/repos/%s/releases?per_page=100&page=%d" % (repo, page)
+              releases = json.loads(get(url, headers).read().decode("utf-8"))
+              if not releases:
+                  break
+              for rel in releases:
+                  for asset in rel.get("assets", []):
+                      github += asset.get("download_count", 0)
+              page += 1
+
+          total = github + warperia
+          print("total=%d" % total)
+          print("::notice::GitHub=%d + Warperia=%d = %d" % (github, warperia, total))
           PY
 
       - name: Update gist badge
@@ -51,6 +82,6 @@ jobs:
           auth: ${{ secrets.GIST_TOKEN }}
           gistID: 5137d5c66c70a38da67ae68bcf41b97c
           filename: warperia-downloads.json
-          label: warperia
-          message: ${{ steps.fetch.outputs.count }}
+          label: downloads
+          message: ${{ steps.fetch.outputs.total }}
           color: 1784b8
