@@ -147,23 +147,9 @@ jobs:
                     --exclude='spec' \
                     ./ release/CleanerChat/
           
-          # Install-instruction marker placed at the zip root, next to the folder.
-          # (Windows filenames can't contain " : / \ * ? < > | so keep it plain.)
-          cat > 'release/PLACE CLEANERCHAT FOLDER IN YOUR WOW ADDONS FOLDER.txt' <<'EOF'
-          Move the "CleanerChat" folder next to this file into your WoW AddOns folder:
-
-              World of Warcraft\Interface\AddOns\
-
-          So the final path is:
-
-              World of Warcraft\Interface\AddOns\CleanerChat\CleanerChat.toc
-
-          Then restart WoW and open the settings with /cc.
-          EOF
-          
-          # Create the zip file (include the instruction file at the zip root)
+          # Create the zip file
           cd release
-          zip -r ../CleanerChat.zip CleanerChat 'PLACE CLEANERCHAT FOLDER IN YOUR WOW ADDONS FOLDER.txt'
+          zip -r ../CleanerChat.zip CleanerChat
           cd ..
           
           echo "Created: CleanerChat.zip"
