@@ -388,7 +388,7 @@ Module.OnInitialize = function(self)
 	end
 
 	-- Add hardcoded patterns for 3.3.5 quest reward messages
-	-- These use "Received item:" instead of "You receive item:"
+	-- These use "Received item:" instead of "You receive item:".
 	table_insert(self.patterns, makePattern(G.QUEST_LOG_RECEIVED_ITEM))
 	table_insert(self.patterns, makePattern(G.QUEST_LOG_RECEIVED_ITEM_MULTIPLE))
 	table_insert(self.patterns, makePattern(G.QUEST_LOG_RECEIVED_COUNT_OF_ITEM))
