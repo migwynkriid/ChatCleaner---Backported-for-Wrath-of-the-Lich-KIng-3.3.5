@@ -16,8 +16,8 @@ name: Update Downloads Badge
 
 on:
   schedule:
-    # Every 6 hours
-    - cron: '0 */6 * * *'
+    # Once per day (00:00 UTC)
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 concurrency:
