@@ -3,8 +3,8 @@ name: Update Downloads Badge
 # Combines GitHub release downloads + Warperia + CurseForge into a single total,
 # and stores it in a GitHub Gist (NOT this repo, so it never creates commits).
 # The README badge reads the total from that gist via shields.io's endpoint
-# renderer. CurseForge is fetched via cfwidget (no API key) and counts as 0 if
-# it is unavailable.
+# renderer. CurseForge is fetched from the official api.curseforge.com and counts
+# as 0 if it is unavailable or not configured.
 #
 # Gist: https://gist.github.com/migwynkriid/5137d5c66c70a38da67ae68bcf41b97c
 #
@@ -40,6 +40,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GIST_ID: 5137d5c66c70a38da67ae68bcf41b97c
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          CF_PROJECT_ID: ${{ vars.CF_PROJECT_ID }}
+          CF_CORE_API_KEY: ${{ secrets.CF_CORE_API_KEY }}
         run: |
           python3 <<'PY'
           import json, os, re, urllib.request
@@ -97,15 +99,24 @@ jobs:
           except Exception as e:
               print("::warning::GitHub count unavailable (using 0): %s" % e)
 
-          # 3) CurseForge downloads via cfwidget (no API key).
+          # 3) CurseForge downloads via the official CurseForge API.
           curseforge = 0
           try:
-              cf = get(
-                  "https://api.cfwidget.com/wow/addons/cleanerchat",
-                  {"User-Agent": "badge-bot"},
-              )
-              data = json.loads(cf.read().decode("utf-8"))
-              curseforge = int(data.get("downloads", {}).get("total", 0) or 0)
+              cf_id = os.environ.get("CF_PROJECT_ID", "")
+              cf_key = os.environ.get("CF_CORE_API_KEY", "")
+              if cf_id and cf_key:
+                  cf = get(
+                      "https://api.curseforge.com/v1/mods/" + cf_id,
+                      {
+                          "x-api-key": cf_key,
+                          "Accept": "application/json",
+                          "User-Agent": "badge-bot",
+                      },
+                  )
+                  data = json.loads(cf.read().decode("utf-8"))
+                  curseforge = int(data.get("data", {}).get("downloadCount", 0) or 0)
+              else:
+                  print("::warning::CurseForge skipped: set CF_CORE_API_KEY secret and CF_PROJECT_ID variable.")
           except Exception as e:
               print("::warning::CurseForge count unavailable (using 0): %s" % e)
 
