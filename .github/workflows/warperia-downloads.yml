@@ -38,13 +38,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
+          GIST_ID: 5137d5c66c70a38da67ae68bcf41b97c
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
-          python3 <<'PY' >> "$GITHUB_OUTPUT"
+          python3 <<'PY'
           import json, os, re, urllib.request
 
           def get(url, headers=None):
               req = urllib.request.Request(url, headers=headers or {})
               return urllib.request.urlopen(req, timeout=30)
+
+          # Previous run's per-source values (for OLD>NEW logging), stored in the
+          # same gist. Missing on the very first run.
+          old = {}
+          try:
+              old = json.loads(get(
+                  "https://gist.githubusercontent.com/migwynkriid/%s/raw/downloads-breakdown.json"
+                  % os.environ.get("GIST_ID", "")
+              ).read().decode("utf-8"))
+          except Exception:
+              old = {}
 
           # Each source is independent: if one fails it counts as 0 and the
           # others still contribute, so the workflow never fails.
@@ -97,11 +110,41 @@ jobs:
               print("::warning::CurseForge count unavailable (using 0): %s" % e)
 
           total = github + warperia + curseforge
-          print("total=%d" % total)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write("total=%d\n" % total)
+
+          new = {"github": github, "warperia": warperia, "curseforge": curseforge, "total": total}
+
+          def chg(k):
+              o = old.get(k)
+              return "%s>%s" % ("?" if o is None else o, new[k])
+
           print(
-              "::notice::GitHub=%d + Warperia=%d + CurseForge=%d = %d"
-              % (github, warperia, curseforge, total)
+              "::notice::GitHub %s | Warperia %s | CurseForge %s | Total %s"
+              % (chg("github"), chg("warperia"), chg("curseforge"), chg("total"))
           )
+
+          # Save this run's breakdown to the gist so the next run can show OLD>NEW.
+          gist_id = os.environ.get("GIST_ID", "")
+          gist_token = os.environ.get("GIST_TOKEN", "")
+          if gist_id and gist_token:
+              try:
+                  payload = json.dumps(
+                      {"files": {"downloads-breakdown.json": {"content": json.dumps(new)}}}
+                  ).encode("utf-8")
+                  req = urllib.request.Request(
+                      "https://api.github.com/gists/" + gist_id,
+                      data=payload,
+                      method="PATCH",
+                      headers={
+                          "Authorization": "Bearer " + gist_token,
+                          "Accept": "application/vnd.github+json",
+                          "User-Agent": "badge-bot",
+                      },
+                  )
+                  urllib.request.urlopen(req, timeout=30)
+              except Exception as e:
+                  print("::warning::Could not save breakdown to gist: %s" % e)
           PY
 
       - name: Update gist badge
