@@ -1,0 +1,22 @@
+package-as: CleanerChat
+
+enable-nolib-creation: no
+
+# Keep the CurseForge package in sync with the GitHub release zip: ship only the
+# addon files, not dev/CI/docs. Mirrors the rsync excludes in release.yml.
+ignore:
+  - .github
+  - .gitignore
+  - .luacheckrc
+  - .styluaignore
+  - stylua.toml
+  - .pkgmeta
+  - APIDocumentation
+  - README.md
+  - LICENSE.txt
+  - CONTRIBUTING.md
+  - changelog.txt
+  - docs
+  - spec
+  - release
+  - "*.zip"

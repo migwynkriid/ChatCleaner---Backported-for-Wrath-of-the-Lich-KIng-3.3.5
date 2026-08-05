@@ -12,6 +12,7 @@ on:
       - '.gitignore'
       - '.luacheckrc'
       - 'stylua.toml'
+      - '.pkgmeta'
       - 'APIDocumentation/**'
       - 'changelog.txt'
       - '**/*.zip'

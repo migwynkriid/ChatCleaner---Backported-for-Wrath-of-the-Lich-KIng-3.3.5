@@ -12,6 +12,7 @@ on:
       - '.gitignore'
       - '.luacheckrc'
       - 'stylua.toml'
+      - '.pkgmeta'
       - 'APIDocumentation/**'
       - 'changelog.txt'
       - '**/*.zip'
@@ -80,7 +81,7 @@ jobs:
           
           # Files that don't trigger releases (same as paths-ignore above + rsync excludes)
           # These should match BOTH paths-ignore at the top AND rsync excludes in the zip step
-          IGNORED_PATTERNS='^\.github/|^\.gitignore$|^\.luacheckrc$|^stylua\.toml$|^APIDocumentation/|^changelog\.txt$|\.zip$|^README\.md$|^LICENSE\.txt$|^CONTRIBUTING\.md$|^docs/|^spec/'
+          IGNORED_PATTERNS='^\.github/|^\.gitignore$|^\.luacheckrc$|^stylua\.toml$|^\.pkgmeta$|^APIDocumentation/|^changelog\.txt$|\.zip$|^README\.md$|^LICENSE\.txt$|^CONTRIBUTING\.md$|^docs/|^spec/'
           
           # Build changelog, filtering out:
           # 1. Version bump commits
@@ -136,6 +137,7 @@ jobs:
                     --exclude='.luacheckrc' \
                     --exclude='.styluaignore' \
                     --exclude='stylua.toml' \
+                    --exclude='.pkgmeta' \
                     --exclude='APIDocumentation' \
                     --exclude='release' \
                     --exclude='*.zip' \
@@ -211,6 +213,30 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Uploads the addon to CurseForge using the BigWigsMods packager, which
+      # auto-detects the game version from the TOC (## Interface). Self-skips
+      # until configured, and never fails the release (continue-on-error).
+      # Required to enable:
+      #   - Secret   CF_API_TOKEN   (https://legacy.curseforge.com/account/api-tokens)
+      #   - Variable CF_PROJECT_ID  (CurseForge project page > About Project > Project ID)
+      - name: Upload to CurseForge
+        continue-on-error: true
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_TOKEN }}
+          CF_PROJECT_ID: ${{ vars.CF_PROJECT_ID }}
+        run: |
+          if [ -z "$CF_API_KEY" ] || [ -z "$CF_PROJECT_ID" ]; then
+            echo "CurseForge upload skipped: set the CF_API_TOKEN secret and CF_PROJECT_ID variable to enable."
+            exit 0
+          fi
+
+          # Tag HEAD locally so the packager builds a proper release version.
+          git tag "v${{ steps.version.outputs.version }}" 2>/dev/null || true
+
+          # -p sets the CurseForge project id; -l/-e skip localization & externals.
+          curl -sSL https://raw.githubusercontent.com/BigWigsMods/packager/master/release.sh \
+            | bash -s -- -p "$CF_PROJECT_ID" -l -e
 
       - name: Commit updated TOC version
         run: |
