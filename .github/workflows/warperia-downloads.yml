@@ -64,20 +64,29 @@ jobs:
           # Each source is independent: if one fails it counts as 0 and the
           # others still contribute, so the workflow never fails.
 
-          # 1) Warperia download count (scraped from the addon page).
-          warperia = 0
+          # 1) Warperia download count (scraped from the addon page). Robust to
+          # the icon markup changing (svg / <i> / none): grab the value span,
+          # drop the icon and any tags, then read the digits.
+          warperia = None
           try:
               wurl = "https://warperia.com/addon-wotlk/cleanerchat/"
               html = get(wurl, {"User-Agent": "Mozilla/5.0"}).read().decode("utf-8", "replace")
-              m = re.search(r"Downloads:.*?bi-download.*?</i>\s*([\d,]+)", html, re.S)
+              m = re.search(
+                  r'Downloads:\s*</span>\s*<span[^>]*class="value"[^>]*>(.*?)</span>',
+                  html, re.S,
+              )
               if not m:
+                  raise ValueError("could not find download count")
+              val = re.sub(r"<svg.*?</svg>", "", m.group(1), flags=re.S)
+              digits = re.sub(r"[^0-9]", "", re.sub(r"<[^>]+>", "", val))
+              if not digits:
                   raise ValueError("could not parse download count")
-              warperia = int(m.group(1).replace(",", ""))
+              warperia = int(digits)
           except Exception as e:
-              print("::warning::Warperia count unavailable (using 0): %s" % e)
+              print("::warning::Warperia count unavailable: %s" % e)
 
           # 2) GitHub release downloads (sum of every release asset, all pages).
-          github = 0
+          github = None
           try:
               repo = os.environ["GH_REPO"]
               token = os.environ.get("GH_TOKEN", "")
@@ -97,10 +106,10 @@ jobs:
                   page += 1
               github = g
           except Exception as e:
-              print("::warning::GitHub count unavailable (using 0): %s" % e)
+              print("::warning::GitHub count unavailable: %s" % e)
 
           # 3) CurseForge downloads via the official CurseForge API.
-          curseforge = 0
+          curseforge = None
           try:
               cf_id = os.environ.get("CF_PROJECT_ID", "")
               cf_key = os.environ.get("CF_CORE_API_KEY", "")
@@ -116,9 +125,22 @@ jobs:
                   data = json.loads(cf.read().decode("utf-8"))
                   curseforge = int(data.get("data", {}).get("downloadCount", 0) or 0)
               else:
+                  curseforge = 0
                   print("::warning::CurseForge skipped: set CF_CORE_API_KEY secret and CF_PROJECT_ID variable.")
           except Exception as e:
-              print("::warning::CurseForge count unavailable (using 0): %s" % e)
+              print("::warning::CurseForge count unavailable: %s" % e)
+
+          # A source that failed this run is None: fall back to the last known
+          # value from the gist so the total never dips on a transient outage.
+          def latest(name, value):
+              if value is None:
+                  prev = old.get(name)
+                  return (int(prev), True) if prev is not None else (0, False)
+              return (value, False)
+
+          github, gh_fb = latest("github", github)
+          warperia, w_fb = latest("warperia", warperia)
+          curseforge, cf_fb = latest("curseforge", curseforge)
 
           total = github + warperia + curseforge
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
@@ -126,13 +148,13 @@ jobs:
 
           new = {"github": github, "warperia": warperia, "curseforge": curseforge, "total": total}
 
-          def chg(k):
+          def chg(k, fb=False):
               o = old.get(k)
-              return "%s>%s" % ("?" if o is None else o, new[k])
+              return "%s>%s%s" % ("?" if o is None else o, new[k], " (kept)" if fb else "")
 
           print(
               "::notice::GitHub %s | Warperia %s | CurseForge %s | Total %s"
-              % (chg("github"), chg("warperia"), chg("curseforge"), chg("total"))
+              % (chg("github", gh_fb), chg("warperia", w_fb), chg("curseforge", cf_fb), chg("total"))
           )
 
           # Save this run's breakdown to the gist so the next run can show OLD>NEW.
